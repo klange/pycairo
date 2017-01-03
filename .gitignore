@@ -1,6 +1,8 @@
 # top-level .gitignore
 *~
 
+*.so
+
 *.pdf
 *.png
 *.ps
