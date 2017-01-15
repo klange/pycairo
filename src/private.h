@@ -59,6 +59,7 @@ extern PyTypeObject PycairoSurfacePattern_Type;
 extern PyTypeObject PycairoGradient_Type;
 extern PyTypeObject PycairoLinearGradient_Type;
 extern PyTypeObject PycairoRadialGradient_Type;
+extern PyTypeObject PycairoMeshGradient_Type;
 PyObject *PycairoPattern_FromPattern (cairo_pattern_t *pattern,
 				      PyObject *base);
 

@@ -66,6 +66,9 @@ PycairoPattern_FromPattern (cairo_pattern_t *pattern, PyObject *base) {
   case CAIRO_PATTERN_TYPE_RADIAL:
     type = &PycairoRadialGradient_Type;
     break;
+  case CAIRO_PATTERN_TYPE_MESH:
+    type = &PycairoMeshGradient_Type;
+    break;
   default:
     type = &PycairoPattern_Type;
     break;
@@ -586,6 +589,194 @@ PyTypeObject PycairoRadialGradient_Type = {
   0,                                  /* tp_init */
   0,                                  /* tp_alloc */
   (newfunc)radial_gradient_new,       /* tp_new */
+  0,                                  /* tp_free */
+  0,                                  /* tp_is_gc */
+  0,                                  /* tp_bases */
+};
+
+/* Class MeshGradient ----------------------------------------------------- */
+
+static PyObject *
+mesh_gradient_new (PyTypeObject *type, PyObject *args, PyObject *kwds) {
+  /*if (!PyArg_ParseTuple(args, "dddddd:MeshGradient.__new__",
+			&cx0, &cy0, &radius0, &cx1, &cy1, &radius1))
+    return NULL;*/
+  return PycairoPattern_FromPattern (cairo_pattern_create_mesh (), NULL);
+}
+
+static PyObject *
+mesh_gradient_get_radial_circles (PycairoMeshGradient *o) {
+  double x0, y0, r0, x1, y1, r1;
+  cairo_pattern_get_radial_circles (o->pattern, &x0, &y0, &r0,
+				    &x1, &y1, &r1);
+  return Py_BuildValue("(dddddd)", x0, y0, r0, x1, y1, r1);
+}
+
+static PyObject *
+mesh_begin_patch (PycairoMeshGradient *o, PyObject *args) {
+  cairo_mesh_pattern_begin_patch (o->pattern);
+  RETURN_NULL_IF_CAIRO_PATTERN_ERROR(o->pattern);
+  Py_RETURN_NONE;
+}
+
+static PyObject *
+mesh_end_patch (PycairoMeshGradient *o, PyObject *args) {
+  cairo_mesh_pattern_end_patch (o->pattern);
+  RETURN_NULL_IF_CAIRO_PATTERN_ERROR(o->pattern);
+  Py_RETURN_NONE;
+}
+
+static PyObject *
+mesh_move_to (PycairoMeshGradient *o, PyObject *args) {
+  double x, y;
+
+  if (!PyArg_ParseTuple(args, "dd:MeshGradient.move_to", &x, &y))
+    return NULL;
+  cairo_mesh_pattern_move_to (o->pattern, x, y);
+  RETURN_NULL_IF_CAIRO_PATTERN_ERROR(o->pattern);
+  Py_RETURN_NONE;
+}
+
+static PyObject *
+mesh_line_to (PycairoMeshGradient *o, PyObject *args) {
+  double x, y;
+
+  if (!PyArg_ParseTuple(args, "dd:MeshGradient.line_to", &x, &y))
+    return NULL;
+  cairo_mesh_pattern_line_to (o->pattern, x, y);
+  RETURN_NULL_IF_CAIRO_PATTERN_ERROR(o->pattern);
+  Py_RETURN_NONE;
+}
+
+static PyObject *
+mesh_curve_to (PycairoMeshGradient *o, PyObject *args) {
+  double x1, y1, x2, y2, x3, y3;
+
+  if (!PyArg_ParseTuple (args, "dddddd:MeshGradient.curve_to",
+			 &x1, &y1, &x2, &y2, &x3, &y3))
+    return NULL;
+
+  cairo_mesh_pattern_curve_to (o->pattern, x1, y1, x2, y2, x3, y3);
+  RETURN_NULL_IF_CAIRO_PATTERN_ERROR(o->pattern);
+  Py_RETURN_NONE;
+}
+
+static PyObject *
+mesh_set_control_point (PycairoMeshGradient *o, PyObject *args) {
+  int num;
+  double x, y;
+
+  if (!PyArg_ParseTuple(args, "idd:MeshGradient.set_control_point",
+             &num, &x, &y))
+    return NULL;
+
+  cairo_mesh_pattern_set_control_point (o->pattern, num, x, y);
+  RETURN_NULL_IF_CAIRO_PATTERN_ERROR(o->pattern);
+  Py_RETURN_NONE;
+}
+
+static PyObject *
+mesh_set_corner_color_rgb (PycairoMeshGradient *o, PyObject *args) {
+  int num;
+  double r, g, b;
+
+  if (!PyArg_ParseTuple(args, "iddd:MeshGradient.set_corner_color_rgb",
+             &num, &r, &g, &b))
+    return NULL;
+
+  cairo_mesh_pattern_set_corner_color_rgb (o->pattern, num, r, g, b);
+  RETURN_NULL_IF_CAIRO_PATTERN_ERROR(o->pattern);
+  Py_RETURN_NONE;
+}
+
+static PyObject *
+mesh_set_corner_color_rgba (PycairoMeshGradient *o, PyObject *args) {
+  int num;
+  double r, g, b, a;
+
+  if (!PyArg_ParseTuple(args, "idddd:MeshGradient.set_corner_color_rgba",
+             &num, &r, &g, &b, a))
+    return NULL;
+
+  cairo_mesh_pattern_set_corner_color_rgba (o->pattern, num, r, g, b, a);
+  RETURN_NULL_IF_CAIRO_PATTERN_ERROR(o->pattern);
+  Py_RETURN_NONE;
+}
+
+static PyObject *
+mesh_add_color_stop_rgb(PycairoMeshGradient *o, PyObject *args) {
+  PyErr_SetString (PyExc_RuntimeError, "add_color_stop_rgb is not allowed on"
+                   " mesh gradients");
+  return NULL;
+}
+
+static PyObject *
+mesh_add_color_stop_rgba(PycairoMeshGradient *o, PyObject *args) {
+  PyErr_SetString (PyExc_RuntimeError, "add_color_stop_rgba is not allowed on"
+                   " mesh gradients");
+  return NULL;
+}
+
+static PyMethodDef mesh_gradient_methods[] = {
+  {"begin_patch", (PyCFunction)mesh_begin_patch, METH_NOARGS },
+  {"end_patch", (PyCFunction)mesh_end_patch, METH_NOARGS },
+  {"move_to", (PyCFunction)mesh_move_to, METH_VARARGS },
+  {"line_to", (PyCFunction)mesh_line_to, METH_VARARGS },
+  {"curve_to", (PyCFunction)mesh_curve_to, METH_VARARGS },
+  {"set_control_point", (PyCFunction)mesh_set_control_point,
+    METH_VARARGS },
+  {"set_corner_color_rgb", (PyCFunction)mesh_set_corner_color_rgb,
+    METH_VARARGS },
+  {"set_corner_color_rgba", (PyCFunction)mesh_set_corner_color_rgba,
+    METH_VARARGS },
+  {"add_color_stop_rgb",(PyCFunction)mesh_add_color_stop_rgb,
+   METH_VARARGS },
+  {"add_color_stop_rgba",(PyCFunction)mesh_add_color_stop_rgba,
+   METH_VARARGS },
+  {NULL, NULL, 0, NULL},
+};
+
+PyTypeObject PycairoMeshGradient_Type = {
+  PyVarObject_HEAD_INIT(&PyType_Type, 0)
+  //PyObject_HEAD_INIT(NULL)
+  //0,                                  /* ob_size */
+  "cairo.MeshGradient",               /* tp_name */
+  sizeof(PycairoMeshGradient),        /* tp_basicsize */
+  0,                                  /* tp_itemsize */
+  0,                                  /* tp_dealloc */
+  0,                                  /* tp_print */
+  0,                                  /* tp_getattr */
+  0,                                  /* tp_setattr */
+  0,                                  /* tp_compare */
+  0,                                  /* tp_repr */
+  0,                                  /* tp_as_number */
+  0,                                  /* tp_as_sequence */
+  0,                                  /* tp_as_mapping */
+  0,                                  /* tp_hash */
+  0,                                  /* tp_call */
+  0,                                  /* tp_str */
+  0,                                  /* tp_getattro */
+  0,                                  /* tp_setattro */
+  0,                                  /* tp_as_buffer */
+  Py_TPFLAGS_DEFAULT,                 /* tp_flags */
+  0,                                  /* tp_doc */
+  0,                                  /* tp_traverse */
+  0,                                  /* tp_clear */
+  0,                                  /* tp_richcompare */
+  0,                                  /* tp_weaklistoffset */
+  0,                                  /* tp_iter */
+  0,                                  /* tp_iternext */
+  mesh_gradient_methods,              /* tp_methods */
+  0,                                  /* tp_members */
+  0,                                  /* tp_getset */
+  &PycairoGradient_Type,              /* tp_base */
+  0,                                  /* tp_dict */
+  0,                                  /* tp_descr_get */
+  0,                                  /* tp_descr_set */
+  0,                                  /* tp_dictoffset */
+  0,                                  /* tp_init */
+  0,                                  /* tp_alloc */
+  (newfunc)mesh_gradient_new,         /* tp_new */
   0,                                  /* tp_free */
   0,                                  /* tp_is_gc */
   0,                                  /* tp_bases */

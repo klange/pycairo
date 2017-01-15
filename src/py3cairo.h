@@ -65,6 +65,7 @@ typedef struct {
 #define PycairoGradient       PycairoPattern
 #define PycairoLinearGradient PycairoPattern
 #define PycairoRadialGradient PycairoPattern
+#define PycairoMeshGradient   PycairoPattern
 
 typedef struct {
   PyObject_HEAD
@@ -124,6 +125,7 @@ typedef struct {
   PyTypeObject *Gradient_Type;
   PyTypeObject *LinearGradient_Type;
   PyTypeObject *RadialGradient_Type;
+  PyTypeObject *MeshGradient_Type;
   PyObject *(*Pattern_FromPattern)(cairo_pattern_t *pattern, PyObject *base);
 
   PyTypeObject *ScaledFont_Type;
@@ -176,6 +178,7 @@ typedef struct {
 #define PycairoGradient_Type        *(Pycairo_CAPI->Gradient_Type)
 #define PycairoLinearGradient_Type  *(Pycairo_CAPI->LinearGradient_Type)
 #define PycairoRadialGradient_Type  *(Pycairo_CAPI->RadialGradient_Type)
+#define PycairoMeshGradient_Type    *(Pycairo_CAPI->MeshGradient_Type)
 #define PycairoPattern_FromPattern   (Pycairo_CAPI->Pattern_FromPattern)
 
 #define PycairoRectangleInt_Type    *(Pycairo_CAPI->RectangleInt_Type)
